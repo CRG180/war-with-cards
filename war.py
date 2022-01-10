@@ -62,6 +62,12 @@ class Card:
 		else:
 			return False
 
+	def __eq__(self, other):
+		if(self.value == other.value):
+			return True
+		else:
+			return False
+
 class Deck:
 	def __init__(self):
 		self.cards = []
@@ -79,11 +85,11 @@ class Deck:
 class Player:
 	def __init__(self, cards, name):
 		self.name = name
-		self.cards = cards 
+		self.cards = cards
 
 	def add_card_to_pot(self,table,
-						player_name = "Null", 
-						sim_mode = False, 
+						player_name = "Null",
+						sim_mode = False,
 						isActiveCard = False):
 
 		card = self.cards.pop(0)
@@ -120,9 +126,8 @@ class Table:
 		return print(self.pot)
 
 
-
 class Game:
-	def __init__(self,player1, player2, 
+	def __init__(self,player1, player2,
 				number_cards_face_down = 3,
 				sim_mode = False):
 
@@ -134,6 +139,7 @@ class Game:
 		self.iterations = 0
 		self.wars = 0
 		self.game_lost_message = "None"
+		self.number_of_cards_on_table = 0
 
 
 	def war(self):
@@ -143,7 +149,7 @@ class Game:
 
 			active_card_player1 = self.player1.add_card_to_pot(
 										table = self.table,
-										player_name = self.player1.name, 
+										player_name = self.player1.name,
 										sim_mode = self.sim_mode,
 										isActiveCard = True)
 
@@ -155,12 +161,19 @@ class Game:
 
 
 			if active_card_player1 > active_card_player2:
-				print(self.player1.name, "wins!")
 				self.player1.collect_cards_from_pot(self.table)
-					
+				if self.sim_mode == False:
+					print(self.player1.name, "wins!")
+				else:
+					pass
+
 			elif active_card_player1 < active_card_player2:
-				print(self.player2.name, "wins!")
 				self.player2.collect_cards_from_pot(self.table)
+
+				if self.sim_mode == False:
+					print(self.player2.name, "wins!")
+				else:
+					 pass
 
 			else:
 				if self.sim_mode == False:
@@ -176,17 +189,20 @@ class Game:
 					self.wars+=1
 					# Each iteration of war face card 1 to 3 are placed down first
 					# If a player runs out of cards that player loses
-					try: 
+					try:
 						for _ in range(1, self.number_cards_face_down + 1):
 							self.player1.add_card_to_pot(table = self.table)
 
 						active_card_player1 = self.player1.add_card_to_pot(
 												table = self.table,
-												player_name = self.player1.name, 
+												player_name = self.player1.name,
 												sim_mode = self.sim_mode,
 				 								isActiveCard = True)
 					except:
-						game_lost_message = self.player1.name + "has no more cards and has lost the game"
+						self.game_lost_message = self.player1.name + " has no more cards and has lost the game"
+						self.number_of_cards_on_table = self.table.number_cards_on_table()
+						self.player2.collect_cards_from_pot(self.table)
+
 						if self.sim_mode == False:
 							print(self.game_lost_message)
 						else:
@@ -206,7 +222,9 @@ class Game:
 											isActiveCard = True)
 
 					except:
-						game_lost_message = self.player2.name + "has no more cards and has lost the game"
+						self.game_lost_message = self.player2.name + " has no more cards and has lost the game"
+						self.number_of_cards_on_table = self.table.number_cards_on_table()
+						self.player1.collect_cards_from_pot(self.table)
 						if self.sim_mode == False:
 							print(self.game_lost_message)
 						else:
@@ -216,14 +234,21 @@ class Game:
 						break
 
 					if active_card_player1 > active_card_player2:
-						print(self.player1.name, "wins this bout of war!")
 						self.player1.collect_cards_from_pot(self.table)
 						war = False
+						if self.sim_mode == False:
+							print(self.player1.name, "wins this bout of war!")
+						else:
+							pass
 
 					elif active_card_player2 > active_card_player1:
-						print(self.player2.name, "wins this bout of war!")
 						self.player2.collect_cards_from_pot(self.table)
 						war = False
+						if self.sim_mode == False:
+							print(self.player2.name, "wins this bout of war!")
+						else:
+							pass
+
 					else:
 						if self.sim_mode == False:
 							clear()
@@ -253,10 +278,13 @@ class Game:
 			elif self.player1.card_count() == 0:
 				game_won = True
 
+			elif self.iterations >= 500_000:
+				game_won = True
+
 			else:
 				pass
 
-		if self.sim_mode == False:	
+		if self.sim_mode == False:
 			clear()
 			print("\nThe Final score is:")
 			print(self.player1.name, self.player1.card_count())
@@ -270,24 +298,27 @@ class Game:
 		return {"player1_name": self.player1.name,
 		        "player2_name": self.player2.name,
 		        "number_cards_face_down": self.number_cards_face_down,
-		        "player1_score": self.player1.card_count(), 
+		        "player1_score": self.player1.card_count(),
 		        "player_2_score": self.player2.card_count(),
-		        "game_lost_message":game_lost_message,
 		        "number_iterations": self.iterations,
 		        "number_of_wars": self.wars,
-		        "game_lost_message": self.game_lost_message}
+		        "game_lost_message": self.game_lost_message,
+				"number_of_cards_on_table":self.number_of_cards_on_table}
 
 
 
-deck = Deck()
-player1 = Player(deck.cards[0:26], input("Enter player 1's name: "))
-player2 = Player(deck.cards[26:52], input("Enter Player 2's name: "))
 
+def main():
+	deck = Deck()
+	# player1 = Player(deck.cards[0:26], input("Enter player 1's name: "))
+	# player2 = Player(deck.cards[26:52], input("Enter Player 2's name: "))
+	player1 = Player(deck.cards[0:26], "stu")
+	player2 = Player(deck.cards[26:52], "charles")
+	game_1 = Game(player1,player2, sim_mode = True)
+	results=game_1.war()
+	clear()
+	for i in results.keys():
+		print(i+": ",results[i])
 
-game_1 = Game(player1,player2)
-game_1.war()
-print(game_1.iterations)
-print(game_1.wars)
-#a = Deck()
-#print(len(a.cards))
-#Game().war()
+if __name__ == "__main__":
+    main()
