@@ -68,257 +68,158 @@ class Card:
 		else:
 			return False
 
-class Deck:
+
+class Deck(list):
 	def __init__(self):
-		self.cards = []
-		self.build()
-		self.shuffle_deck()
-
-	def build(self):
-		for s in ['♠', '♦', '♥', '♣']:
-			for v in range(1,15):
-				self.cards.append(Card(s,v))
-
-	def shuffle_deck(self):
-		return random.shuffle(self.cards)
+		super().__init__(Card(s,v) for s in ['♠', '♦', '♥', '♣']
+		for v in range(2,15))
+		random.shuffle(self)
 
 class Player:
-	def __init__(self, cards, name):
+	def __init__(self, name):
 		self.name = name
-		self.cards = cards
+		self.hand = []
+		self.captured =[]
+		self.player_message = ""
 
-	def add_card_to_pot(self,table,
-						player_name = "Null",
-						sim_mode = False,
-						isActiveCard = False):
-
-		card = self.cards.pop(0)
-		table.pot.append(card)
-
-		if (sim_mode == False) and (isActiveCard == True):
-			print(player_name)
-			print(card)
-			return card
+	@property
+	def outOfCards(self):
+		if len(self.hand) == 0 and len(self.captured) == 0:
+			return True
 		else:
-			return card
+			return False
+	@property
+	def totalCards(self):
+		return len(self.hand) + len(self.captured)
 
-	def collect_cards_from_pot(self,table):
-		self.cards.extend(table.pot)
-		table.pot = []
-
-	def card_count(self):
-		return len(self.cards)
-
-	def print_deck(self):
-		'''function for trouble shooting'''
-		return print(self.cards)
-
-class Table:
-	def __init__(self):
-		self.pot = []
-
-	def number_cards_on_table(self):
-		'''method for trouble shooting'''
-		return len(self.pot)
-
-	def print_table(self):
-		'''method for troubleshooting'''
-		return print(self.pot)
+	def build_hand(self):
+		random.shuffle(self.captured)
+		while len(self.captured) >0:
+			self.hand.append(self.captured.pop(0))
 
 
-class Game:
-	def __init__(self,player1, player2,
-				number_cards_face_down = 3,
-				sim_mode = False):
+	def add_cards_to_table(self,
+	                      table,
+						  nCardsAdd = 1,
+	 					  simMode = True,
+						  ):
+		activeCard = "_"
+		if self.outOfCards or self.totalCards < nCardsAdd:
+			if simMode:
+				self.player_message = f"{self.name} is out of cards." \
+				 f" {self.name} has {self.totalCards}" \
+				 f" cards but needs {nCardsAdd}"
+			self.hand = []
+			self.captured = [] # This is the reason why we don't always see 52 cards at the end
+			return Card('♠', 0)
 
-		self.player1= player1
-		self.player2 = player2
-		self.table = Table()
-		self.number_cards_face_down = number_cards_face_down
-		self.sim_mode = sim_mode
-		self.iterations = 0
-		self.wars = 0
-		self.game_lost_message = "None"
-		self.number_of_cards_on_table = 0
-
-
-	def war(self):
-		game_won = False
-		while game_won == False:
-			self.iterations+=1
-
-			active_card_player1 = self.player1.add_card_to_pot(
-										table = self.table,
-										player_name = self.player1.name,
-										sim_mode = self.sim_mode,
-										isActiveCard = True)
-
-			active_card_player2 = self.player2.add_card_to_pot(
-										table = self.table,
-										player_name = self.player2.name,
-										sim_mode = self.sim_mode,
-										isActiveCard = True)
-
-
-			if active_card_player1 > active_card_player2:
-				self.player1.collect_cards_from_pot(self.table)
-				if self.sim_mode == False:
-					print(self.player1.name, "wins!")
-				else:
-					pass
-
-			elif active_card_player1 < active_card_player2:
-				self.player2.collect_cards_from_pot(self.table)
-
-				if self.sim_mode == False:
-					print(self.player2.name, "wins!")
-				else:
-					 pass
-
-			else:
-				if self.sim_mode == False:
-					print("Let's play war!")
-					input("Press Enter to contine...")
-					clear()
-				else:
-					pass
-
-
-				war = True
-				while war ==True:
-					self.wars+=1
-					# Each iteration of war face card 1 to 3 are placed down first
-					# If a player runs out of cards that player loses
-					try:
-						for _ in range(1, self.number_cards_face_down + 1):
-							self.player1.add_card_to_pot(table = self.table)
-
-						active_card_player1 = self.player1.add_card_to_pot(
-												table = self.table,
-												player_name = self.player1.name,
-												sim_mode = self.sim_mode,
-				 								isActiveCard = True)
-					except:
-						self.game_lost_message = self.player1.name + " has no more cards and has lost the game"
-						self.number_of_cards_on_table = self.table.number_cards_on_table()
-						self.player2.collect_cards_from_pot(self.table)
-
-						if self.sim_mode == False:
-							print(self.game_lost_message)
-						else:
-							pass
-
-						game_won = True
-						break
-
-					try:
-						for _ in range(1, self.number_cards_face_down + 1):
-							self.player2.add_card_to_pot(self.table)
-
-						active_card_player2 = self.player2.add_card_to_pot(
-											table = self.table,
-											player_name = self.player2.name,
-											sim_mode = self.sim_mode,
-											isActiveCard = True)
-
-					except:
-						self.game_lost_message = self.player2.name + " has no more cards and has lost the game"
-						self.number_of_cards_on_table = self.table.number_cards_on_table()
-						self.player1.collect_cards_from_pot(self.table)
-						if self.sim_mode == False:
-							print(self.game_lost_message)
-						else:
-							pass
-
-						game_won = True
-						break
-
-					if active_card_player1 > active_card_player2:
-						self.player1.collect_cards_from_pot(self.table)
-						war = False
-						if self.sim_mode == False:
-							print(self.player1.name, "wins this bout of war!")
-						else:
-							pass
-
-					elif active_card_player2 > active_card_player1:
-						self.player2.collect_cards_from_pot(self.table)
-						war = False
-						if self.sim_mode == False:
-							print(self.player2.name, "wins this bout of war!")
-						else:
-							pass
-
-					else:
-						if self.sim_mode == False:
-							clear()
-							print("The War Continues")
-							#sleep(3)
-							input("Press enter to contine...")
-							clear()
-						else:
-							pass
-
-			if self.sim_mode == False:
-				print("\nThe score is:")
-				print(self.player1.name, self.player1.card_count())
-				print(self.player2.name, self.player2.card_count())
-				print("Number of iterations:",self.iterations)
-				print("Number of wars:",self.wars)
-				input("\nPress Enter to contine...")
-				clear()
-				sleep(.1)
-
-			else:
-				pass
-
-			if self.player1.card_count()== 0:
-				game_won = True
-
-			elif self.player1.card_count() == 0:
-				game_won = True
-
-			elif self.iterations >= 500_000:
-				game_won = True
-
-			else:
-				pass
-
-		if self.sim_mode == False:
-			clear()
-			print("\nThe Final score is:")
-			print(self.player1.name, self.player1.card_count())
-			print(self.player2.name, self.player2.card_count())
-			print("Number of iterations:",self.iterations)
-			print("Number of wars:",self.wars)
-
+		elif len(self.hand) == 0 or len(self.hand) < nCardsAdd:
+			self.build_hand() # build hand if out of cards, get captured cards
 		else:
 			pass
 
-		return {"player1_name": self.player1.name,
-		        "player2_name": self.player2.name,
-		        "number_cards_face_down": self.number_cards_face_down,
-		        "player1_score": self.player1.card_count(),
-		        "player_2_score": self.player2.card_count(),
-		        "number_iterations": self.iterations,
-		        "number_of_wars": self.wars,
-		        "game_lost_message": self.game_lost_message,
-				"number_of_cards_on_table":self.number_of_cards_on_table}
+		for i in range(0,nCardsAdd):
+			if i == 0:
+				activeCard = self.hand[i]
+			else:
+				pass
+			table.append(self.hand.pop(0))
+		return activeCard
+
+	def collect_cards_from_table(self, table):
+		while len(table) > 0:
+			self.captured.append(table.pop(0))
+
+	def __repr__(self):
+		return f"{self.name}--{self.totalCards}"
+
+
+class Table(list):
+	def __init__(self):
+		super().__init__()
+
+class Game:
+	def __init__(self,playerList,
+				numberCardsFaceDown = 3,
+				simMode = False):
+		self.playerList = playerList
+		self.numberCardsFaceDown = numberCardsFaceDown
+		self.table = []
+		self.numberIters = 0
+		self.numberWarIters = 0
+
+	def deal_cards(self):
+		deck = Deck() # maybe add more decks if more than x players
+		while len(deck) > 0:
+			for player in self.playerList:
+				try:
+					player.hand.append(deck.pop(0))
+				except:
+					pass
+
+	def no_war(self):
+		self.numberIters+=1
+		activeCardlist =[]
+		for player in playerList:
+			activeCardlist.append(player.add_cards_to_table(self.table))
+
+		maxCardValue = max(activeCardlist)
+		maxCardIndex = [index for index, val in enumerate(activeCardlist) if val == maxCardValue]
+
+		if len(maxCardIndex) > 1 and maxCardValue.value > 0:
+			self.war(maxCardIndex)
+			return False
+		#draw
+		elif sum(card.value for card in activeCardlist) == 0:
+			return True #Game is over, not sure if this is possible
+
+		#all but one player has cards, a person has been defeated
+		elif [player.totalCards for player in playerList].count(0) == len(playerList) -1:
+			return True # Games is over
+
+		else:
+			playerList[maxCardIndex[0]].collect_cards_from_table(self.table)
+			return False # game continues
+
+	def war(self, maxCardIndex):
+		self.numberWarIters+=1
+		warPlayerList = [playerList[i] for i in maxCardIndex]
+		activeCardlist = []
+		for player in warPlayerList:
+			activeCardlist.append(player.add_cards_to_table(self.table ,nCardsAdd = 4))
+
+		maxCardValue = max(activeCardlist)
+		maxCardIndex = [index for index, val in enumerate(activeCardlist) if val == maxCardValue]
+
+		if len(maxCardIndex) >1 and maxCardValue.value > 0:
+			self.war(maxCardIndex) # Has occured multiable times
+
+		else: # a player has won the war
+			playerList[maxCardIndex[0]].collect_cards_from_table(self.table)
+			# goes back to regular game
 
 
 
-
-def main():
-	deck = Deck()
-	# player1 = Player(deck.cards[0:26], input("Enter player 1's name: "))
-	# player2 = Player(deck.cards[26:52], input("Enter Player 2's name: "))
-	player1 = Player(deck.cards[0:26], "stu")
-	player2 = Player(deck.cards[26:52], "charles")
-	game_1 = Game(player1,player2, sim_mode = True)
-	results=game_1.war()
-	clear()
-	for i in results.keys():
-		print(i+": ",results[i])
 
 if __name__ == "__main__":
-    main()
+
+	playerList = [Player("Stu"), Player("Charles"), Player("Caitlin")]
+	game = Game(playerList = playerList)
+	game.deal_cards()
+	gameWinner = False
+	while gameWinner == False:
+		gameWinner = game.no_war()
+
+	winnerTotals = [player.totalCards for player in playerList]
+	winnerValue = max(winnerTotals)
+	winnerIndex = winnerTotals.index(winnerValue)
+	playerList[winnerIndex].collect_cards_from_table(game.table)
+
+	for player in playerList:
+		player.build_hand()
+
+	for player in playerList:
+		print(f"{player.name} ---Total cards {player.totalCards}" )
+
+	print(f"The game played {game.numberIters} iterarations.")
+	print(f"War happend {game.numberWarIters} iterarations.")
