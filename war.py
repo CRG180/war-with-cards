@@ -129,6 +129,7 @@ class Player:
 	def collect_cards_from_table(self, table):
 		while len(table) > 0:
 			self.captured.append(table.pop(0))
+		#print(self.name, "collecting from the pot")
 
 	def __repr__(self):
 		return f"{self.name}--{self.totalCards}"
@@ -150,10 +151,13 @@ class Game:
 
 	def deal_cards(self):
 		deck = Deck() # maybe add more decks if more than x players
+		#Shuffle the order in which the cards get dealt
+		playerIndexShuffle = [i for i in range(len(playerList))]
+		random.shuffle(playerIndexShuffle)
 		while len(deck) > 0:
-			for player in self.playerList:
+			for i in playerIndexShuffle:
 				try:
-					player.hand.append(deck.pop(0))
+					playerList[i].hand.append(deck.pop(0))
 				except:
 					pass
 
@@ -195,7 +199,7 @@ class Game:
 			self.war(maxCardIndex) # Has occured multiable times
 
 		else: # a player has won the war
-			playerList[maxCardIndex[0]].collect_cards_from_table(self.table)
+			warPlayerList[maxCardIndex[0]].collect_cards_from_table(self.table)
 			# goes back to regular game
 
 
@@ -203,9 +207,12 @@ class Game:
 
 if __name__ == "__main__":
 
-	playerList = [Player("Stu"), Player("Charles"), Player("Caitlin")]
+	playerList = [Player("Stu"), Player("Charles"), Player("Sally Jo"),Player("Clara")]
 	game = Game(playerList = playerList)
 	game.deal_cards()
+	# for player in playerList:
+	# 	print(sum(card.value for card in player.hand), player.name)
+
 	gameWinner = False
 	while gameWinner == False:
 		gameWinner = game.no_war()
