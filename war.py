@@ -141,7 +141,7 @@ class Table(list):
 
 class Game:
 	def __init__(self,playerList,
-				numberCardsFaceDown = 3,
+				numberCardsFaceDown = 4,
 				simMode = False):
 		self.playerList = playerList
 		self.numberCardsFaceDown = numberCardsFaceDown
@@ -152,19 +152,19 @@ class Game:
 	def deal_cards(self):
 		deck = Deck() # maybe add more decks if more than x players
 		#Shuffle the order in which the cards get dealt
-		playerIndexShuffle = [i for i in range(len(playerList))]
+		playerIndexShuffle = [i for i in range(len(self.playerList))]
 		random.shuffle(playerIndexShuffle)
 		while len(deck) > 0:
 			for i in playerIndexShuffle:
 				try:
-					playerList[i].hand.append(deck.pop(0))
+					self.playerList[i].hand.append(deck.pop(0))
 				except:
 					pass
 
 	def no_war(self):
 		self.numberIters+=1
 		activeCardlist =[]
-		for player in playerList:
+		for player in self.playerList:
 			activeCardlist.append(player.add_cards_to_table(self.table))
 
 		maxCardValue = max(activeCardlist)
@@ -178,19 +178,19 @@ class Game:
 			return True #Game is over, not sure if this is possible
 
 		#all but one player has cards, a person has been defeated
-		elif [player.totalCards for player in playerList].count(0) == len(playerList) -1:
+		elif [player.totalCards for player in self.playerList].count(0) == len(self.playerList) -1:
 			return True # Games is over
 
 		else:
-			playerList[maxCardIndex[0]].collect_cards_from_table(self.table)
+			self.playerList[maxCardIndex[0]].collect_cards_from_table(self.table)
 			return False # game continues
 
 	def war(self, maxCardIndex):
 		self.numberWarIters+=1
-		warPlayerList = [playerList[i] for i in maxCardIndex]
+		warPlayerList = [self.playerList[i] for i in maxCardIndex]
 		activeCardlist = []
 		for player in warPlayerList:
-			activeCardlist.append(player.add_cards_to_table(self.table ,nCardsAdd = 4))
+			activeCardlist.append(player.add_cards_to_table(self.table ,self.numberCardsFaceDown))
 
 		maxCardValue = max(activeCardlist)
 		maxCardIndex = [index for index, val in enumerate(activeCardlist) if val == maxCardValue]
@@ -202,18 +202,12 @@ class Game:
 			warPlayerList[maxCardIndex[0]].collect_cards_from_table(self.table)
 			# goes back to regular game
 
-
-
-
-if __name__ == "__main__":
-
+def main():
 	playerList = [Player("Stu"), Player("Charles"), Player("Sally Jo"),Player("Clara")]
 	game = Game(playerList = playerList)
 	game.deal_cards()
-	# for player in playerList:
-	# 	print(sum(card.value for card in player.hand), player.name)
-
 	gameWinner = False
+
 	while gameWinner == False:
 		gameWinner = game.no_war()
 
@@ -230,3 +224,30 @@ if __name__ == "__main__":
 
 	print(f"The game played {game.numberIters} iterarations.")
 	print(f"War happend {game.numberWarIters} iterarations.")
+
+
+if __name__ == "__main__":
+
+	main()
+
+	# playerList = [Player("Stu"), Player("Charles"), Player("Sally Jo"),Player("Clara")]
+	# game = Game(playerList = playerList)
+	# game.deal_cards()
+	# gameWinner = False
+	#
+	# while gameWinner == False:
+	# 	gameWinner = game.no_war()
+	#
+	# winnerTotals = [player.totalCards for player in playerList]
+	# winnerValue = max(winnerTotals)
+	# winnerIndex = winnerTotals.index(winnerValue)
+	# playerList[winnerIndex].collect_cards_from_table(game.table)
+	#
+	# for player in playerList:
+	# 	player.build_hand()
+	#
+	# for player in playerList:
+	# 	print(f"{player.name} ---Total cards {player.totalCards}" )
+	#
+	# print(f"The game played {game.numberIters} iterarations.")
+	# print(f"War happend {game.numberWarIters} iterarations.")
