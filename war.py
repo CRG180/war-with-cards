@@ -1,8 +1,9 @@
+# -*- coding: utf-8 -*-
 import random
 import os
 from subprocess import call
 from time import sleep
-
+from termcolor import colored
 
 def clear():
 	_ = call('clear' if os.name =='posix' else 'cls')
@@ -26,6 +27,46 @@ class Card:
 			self.face_text = "A"
 		else:
 			self.face_text = str(self.value)
+
+	#@property
+	def display(self, playerName, nCards, maxValue):
+
+		displayText = self.face_text
+		if self.value == 0:
+			displayText= '☠'
+			self.suit = '☠'
+		else:
+			pass
+
+		if self.value == maxValue:
+			color = 'yellow'
+
+		elif self.value == 0:
+			color = 'red'
+		else:
+			color = "white"
+
+		card = (
+		'     {:^}\n'
+        '┌─────────┐\n'
+        '│{}       │\n'
+        '│         │\n'
+        '│         │\n'
+        '│    {}   │\n'
+        '│         │\n'
+        '│         │\n'
+        '│       {}│\n'
+        '└─────────┘\n'
+		'    {}     \n'
+	    ).format(
+			colored(format(playerName, ''),color),
+	        colored(format(displayText, ' <2'),color),
+	        colored(format(self.suit, ' <2'),color),
+	        colored(format(displayText, ' <2'),color),
+			colored(format(nCards, ' <2'),color)
+	    )
+		return card
+
 
 	def __str__(self):
 
@@ -101,7 +142,7 @@ class Player:
 	def add_cards_to_table(self,
 	                      table,
 						  nCardsAdd = 1,
-	 					  simMode = True,
+	 					  simMode = True
 						  ):
 		activeCard = "_"
 		if self.outOfCards or self.totalCards < nCardsAdd:
@@ -129,7 +170,6 @@ class Player:
 	def collect_cards_from_table(self, table):
 		while len(table) > 0:
 			self.captured.append(table.pop(0))
-		#print(self.name, "collecting from the pot")
 
 	def __repr__(self):
 		return f"{self.name}--{self.totalCards}"
@@ -138,6 +178,10 @@ class Player:
 class Table(list):
 	def __init__(self):
 		super().__init__()
+
+	# def disply the table
+	# Create feature where the cards are shown side by side if print option
+
 
 class Game:
 	def __init__(self,playerList,
@@ -148,6 +192,7 @@ class Game:
 		self.table = []
 		self.numberIters = 0
 		self.numberWarIters = 0
+		self.interActiveMode = True
 
 	def deal_cards(self):
 		deck = Deck() # maybe add more decks if more than x players
@@ -169,6 +214,10 @@ class Game:
 
 		maxCardValue = max(activeCardlist)
 		maxCardIndex = [index for index, val in enumerate(activeCardlist) if val == maxCardValue]
+
+		self.display_active_cards(activeCardlist,
+								maxCardValue.value,self.interActiveMode,
+								playerList = self.playerList)
 
 		if len(maxCardIndex) > 1 and maxCardValue.value > 0:
 			self.war(maxCardIndex)
@@ -195,6 +244,11 @@ class Game:
 		maxCardValue = max(activeCardlist)
 		maxCardIndex = [index for index, val in enumerate(activeCardlist) if val == maxCardValue]
 
+		self.display_active_cards(activeCardlist,
+								  maxCardValue.value,
+								  self.interActiveMode,
+								  playerList = warPlayerList)
+
 		if len(maxCardIndex) >1 and maxCardValue.value > 0:
 			self.war(maxCardIndex) # Has occured multiable times
 
@@ -202,8 +256,20 @@ class Game:
 			warPlayerList[maxCardIndex[0]].collect_cards_from_table(self.table)
 			# goes back to regular game
 
+	def display_active_cards(self,activeCardlist,maxCardValue,interActiveMode, playerList):
+		if interActiveMode:
+			spacing = ' ' * 5  # Between Cards.
+			#print(maxCardValue)
+			for pieces in zip(*(card.display(player.name, player.totalCards,maxCardValue).splitlines() for card, player in zip(activeCardlist, playerList))):
+				print(spacing.join(pieces))
+
+			sleep(1)
+			clear()
+		else:
+			pass
+
 def main():
-	playerList = [Player("Stu"), Player("Charles"), Player("Sally Jo"),Player("Clara")]
+	playerList = [Player("Charles"), Player("Stu"), Player("Clara"),Player("Caitlin")]
 	game = Game(playerList = playerList)
 	game.deal_cards()
 	gameWinner = False
@@ -227,27 +293,4 @@ def main():
 
 
 if __name__ == "__main__":
-
 	main()
-
-	# playerList = [Player("Stu"), Player("Charles"), Player("Sally Jo"),Player("Clara")]
-	# game = Game(playerList = playerList)
-	# game.deal_cards()
-	# gameWinner = False
-	#
-	# while gameWinner == False:
-	# 	gameWinner = game.no_war()
-	#
-	# winnerTotals = [player.totalCards for player in playerList]
-	# winnerValue = max(winnerTotals)
-	# winnerIndex = winnerTotals.index(winnerValue)
-	# playerList[winnerIndex].collect_cards_from_table(game.table)
-	#
-	# for player in playerList:
-	# 	player.build_hand()
-	#
-	# for player in playerList:
-	# 	print(f"{player.name} ---Total cards {player.totalCards}" )
-	#
-	# print(f"The game played {game.numberIters} iterarations.")
-	# print(f"War happend {game.numberWarIters} iterarations.")
